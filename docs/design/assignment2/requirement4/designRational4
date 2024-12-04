@@ -1,0 +1,87 @@
+In order for the terminal to work, it require several other component such as the item it is selling as well as the
+system behind the choice that the intern can make or interact with when they are standing on / next to the machine.
+In computerTerminal class, another ground extended class, the most crucial methods for the entire system to work is
+it's allowable action which provide the intern with choice to purchase item from the terminal. Within allowable action
+method, other classes' is being used through dependencies. This include new action class "purchaseAction", and printer
+based classes which are the item's printers.
+
+In purchaseAction, if the intern have selected a choice to purchase an item from the terminal, the class will process
+on whether the intern's wallet / balance is sufficient enough to make a purchase on the chosen item as well as activate
+the printer to produce that very item and provide it to the intern. Behind the scene, the printers extends classes,
+will provide a defensive copy of the item when the purchaseAction class had approved that the intern is eligible to get
+the item. Here is the catch, within the printer classes, there are certain condition which can be met and result in
+changes to the price or the success rate of receiving the item.
+
+For example: DragonSlayerPrinter will not print a replica of the DragonSlayer after the intern has already pay for the
+item if 50 % is met to not provide intern with the item. Whilst the other items such as "Energy drink" and
+"Toilet paper" will only have side effect which only affect their price rather than providing nothing.
+
+Dragon-Slayer sword is an extends of existing weaponItem which was forged with allowable action that allow the wielder
+of it to strike enemy with 75% chance of hitting accuracy with 50 hit-points.
+
+Energy drink class, a class which extends from consumable class, will have allowable action which allow the actor who
+has energy drink in possession to consume and gain health / hit-point.
+
+Toilet paper... useless.... a class extends from item class which.. doesn't do anything.
+
+In terms of why these new class are extendable to the prior classes:
+
+- ComputerTerminal is an extends of ground class due to it being an object that is not alive and require property which
+  typical ground object has.
+
+- Purchasable item that will be sub-classes of item which enables interns and other actors to hold and be kept in their
+  inventory. Specifically, energy drink extends from consumable as it can be consume.
+
+- All the printers for each items are an extends of an interface called "printer" which has blue print of all methods that
+  all printer require to function.
+
+- PurchaseAction is an extends of Action class as it will be display on intern's choice of action and execute if intern
+  select it.
+
+Concepts and theories:
+
+- DRY: avoid code repetition through extends and implementation of other class or interface.
+       e.g. relationship between printer interface and other printer sub-classes such as dragonSlayerPrinter,
+            energyDrinkPrinter, and toiletPaperPrinter.
+
+- SRP: Each new classes is produced to deal with at most 2 responsibility.
+       For example:
+        computerTerminal: generate action for intern to purchase each item.
+        printer: Acts as blueprint for printer sub-classes.
+        dragonSlayer: create Dragon-Slayer object and provide possible specifically action for it.
+        energyDrink: create energy drink object and provide possible action specifically for it.
+        toiletPaper: create toilet paper object and... that's it.
+        dragonSlayerPrinter: --|
+        energyDrinkPrinter:    | ===> generate item's side affects and provide item to the purchaseAction.
+        toiletPaperPrinter:  --|
+        purchaseAciton: checking if use have sufficient balance and call printer class according to the provided one.
+
+- OCP: e.g. if energy drink have other affect such as buff, a new method can easily be added to the consume method which
+       will both heal and add buff status.
+
+- LSP: e.g.
+        - dragonSlayerPrinter in substitution of printer.
+        - energyDrink can be use in substitution of item.
+        - dragonSlayer can be use in substitution of WeaponItem.
+
+- ISP: All the printer sub-classes isn't being forced to and is using all the methods that printer interface provide.
+
+- Defensive copy: For getitem() method for each printer sub-classes return a new object of the item.
+
+- Dependency injection: Constructor of purchaseAction which takes a parameter of printer object and assign it to
+                        this.printer (global variable).
+
+- dependency inversion / DIP: if intern picked to purchase Dragon-Slayer, purchaseAction will utilise dragonSlayerPrinter
+                        methods through the interface to get to the dragonSlayerPrinter class.
+
+
+Pros:
+- Simple to modify and solve bugs.
+- Can easily be extensible.
+- readable due to each class having specific responsibility.
+
+Cons:
+- If there's more item added to the game, computerTerminal's allowableAction needs to be modify by adding the new item's
+  purchaseAction and it's printer class.
+- may increase complication or complexity due to many classes.
+- may impact performance due to many classes.

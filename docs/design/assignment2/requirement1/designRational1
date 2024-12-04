@@ -1,0 +1,67 @@
+An update has be done to the previous crater to welcome and accommodate 2 new type of enemy that has recently been
+added to the game, the new crater will now be able to spawn other the newly added enemy other than huntsman spider.
+New enemies will have their own classes which will be extends from a super / parent class called "Enemy" which has
+the blueprint (all the require attributes and methods) for any enemy in the game. Enemy is a class which extends
+from actor and have extra attributes such as spawn chance and monster which is an enum attributes from an enum class
+called "Monster" that distinguish each enemies from each other.
+
+Crater will have an extra constructor (non-default) which will allow the us to specify what type of monster will be
+spawn from that very crate. The difference between the default and the non-default one is that the default one will
+generate a number for attribute "indexToSpawn", which represents each enemy (index) from 0 - (number of enemy in
+the game - 1) whilst the non-default will utilise enum by converting it to int (by using .ordinal()). When this
+number is obtained, it'll be use in tick() which is responsible for generating enemy each turn the intern takes
+(depending on the spawn chance of each monster).
+
+
+In terms of why these new class are extendable to the prior classes:
+
+- Like the previous crater, the current crater is still extends from the ground class which acts as a blueprint for
+ any ground object and allow the crater to also behave or have methods like other ground class.
+
+- All the enemies within the game extends from enemy class which is an extends from actor class. By doing so, this
+ will allow them to behave during the game (to steal, walk, pick, attack depending on specific enemy).
+
+
+Concepts and theories:
+- SRP: each class has their own responsibility.
+   e.g.
+   - crater: Spawns enemy.
+   - huntsmanSpider: Responsible for creating an object of huntsmanSpider.
+   - suspiciousAstronaut: Responsible for creating an object of suspiciousAstronaut.
+   - alienBug: Responsible for creating an object of alienBug.
+   - enemy: blueprint for all the possible enemies within the game.
+   - monster: distinguish each monster (by index and the name of the enum).
+
+- OCP: In all the enemy class's sub-classes, an extra parameter for "Monster monster" is implemented to their
+   constructor. This allow the class to be able to initialise an enemy object like usual with extra attributes.
+   so technically speaking, the class is extendable without having to modify the previous code which is the Enemy
+   parent-class.
+
+- LSP: all the enemy sub-class such as (HuntsmanSpider, AlienBug, SuspiciousAstronaut) are substitutable to enemy
+   object.
+
+- ISP: since there isn't any interface being use in this requirement, it met the principle terms as none of the class
+   is force to rely on interface which they do not use.
+   but if we also take abstract class into consideration, all the enemy sub-class such as (HuntsmanSpider, AlienBug,
+    SuspiciousAstronaut) are relying on an abstract class (Enemy class) to initialise themselves and methods.
+
+- DIP (dependency inversion principle): In crater class, both constructor and tick() methods are relying on Enemy class
+                                    to be able to get access to its sub-classes which are HuntsmanSpider, AlienBug,
+                                    and SuspiciousAstronaut.
+
+- Defensive copy: In crater's tick(Enemy enemy) method, if the chance is met for an enemy to spawn, the crater will
+                  spawn a defensive copy of a enemy as a new list that contain enemy as well as the enemies themselves
+                  will be initialisation again in every turn.
+
+- DRY: repetition is avoided by extends sub-classes with their parent classes.
+
+Pros:
+- are extendable,
+- easy to maintain,
+- readable
+- easy to test
+As they are split into smaller classes as well as have their own responsibility.
+
+Cons:
+- may impact speed or performance of the code
+- may be complicated for others without prior knowledge of the code to look at.

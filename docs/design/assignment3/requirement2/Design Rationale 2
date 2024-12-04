@@ -1,0 +1,174 @@
+Design Rationale for Req2: Factory
+
+- In this requirement, there exist an entity in parking lot that will allow player/intern to sell certain items/scraps
+  in order for them to make profits out of what they could find from both of the moons.
+
+These following classes were created to assist and developed previous code to make the above requirement possible:
+
+  SellableItem interface:
+  All the items that are sellable must implement the SellableItem interface. This class has important methods such as
+  getPrice(), getSellingPrice() and sellItem(Actor actor, Gamemap) which would allow any items to perform essential processes
+  but also reduce redundant due to interface's re-usability as certain item may have varied percentage and effects when
+  being purchase by the humanoid figure. Each sellable item's getPrice() will simply provide the price of the item. If
+  the item doesn't have attribute chance, getSellingItem() will also work the same as getPrice(). If the item has chance
+  /promotion that associates with the item price, then the item's getSellingPrice() method will calculate whether the
+  chance/promotion is met, if so, change the price, if not, the price remains the same. In terms of toilet paper where
+  intern will instantly be kill by Humanoid figure if chance is met, the implementation of hurting player is instead
+  implement in sellItem() method. Initially, this implementation was implemented in getSellingPrice() but due to the
+  main responsibility of getSellingPrice() method being to deal with item's price, eliminating the intern shouldn't be
+  related to this method at all but instead should be implement Whilst the item is being sold which occurs in sellItem()
+  method where it has a responsibility in dealing with essential process of selling the item by removing and adding
+  intern's balance when an item is sold.
+
+  SellableScrap:
+  Is an extends of Item with additional attributes (price, and chance of the item) and implement of SellableItem
+  methods. Made for re-usability for items/scraps that are sellable. Initially, each item tha tare sellable has their
+  own price and chance class attribute but due to this repetition, the item will be harder to manager as you would
+  need to be very specific and approach each one to make changes which result in poor maintainability. So instead, A
+  class is created (this one) so that each item can be maintain through this class solely.
+
+  A problem is confronted when an attempt to extends large fruit with this class, as large fruit needs to extends
+  consumable this class is instead just implement SellableItem interface. Other than that, the class allowableAction
+  method has manually made exactly like SellingScrap's class's allowableAction.
+
+  TRADER enum:
+  An Status enum class, a new enum "TRADER" is created to signifies an actor as being a trader (who triggers sellable
+  item's selling action). It is currently being used in humanoid figure to identify itself as trader to intern.
+  trader's will have "TRADER" added to their capability. In the future where new trader actor is added, this
+  enum can easily be reuse to identify actor as trader.
+
+  TraderActor:
+  A class for actor that triggers sellable item's action to sell if the intern has it in possession. The actor of this
+  class will not be able to be attack by other actor in the game. This is due to the fact that in current attack related
+  condition in AttackBehaviour, AttackAction, weaponItem item's, the holder/owner of the attack will need to be opposite
+  type to the actor that is gonna be attack.
+
+  Humanoid figure:
+  As Humanoid figure is a type of actor that shouldn't be attack by both intern and other actor such as enemy, Humanoid
+  is neither ENEMY and HOSTILE_TO_ENEMY. A class (TraderActor) is created to represent actor that are traders
+  and is neutral to other actors/entities in the game. Object of this class will inherit a new status which is called
+  "TRADER". Despite Humanoid figure already restricted from being attack by other type of actor (due to it not being
+  HOSTILE_TO_ENEMY or ENEMY), I figure an additional status should be created to represent those who aren't able to be
+  attack and can be interact (selling/trading) by other actor.
+  By doing so, any upcoming actor in the future that will be restrict from any attack as well as trade-able with other
+  actor will utilise "TRADER" by extending TraderActor. Thus, enhancing the code's re-usability.
+  In the initial design of humanoidFigure class, there was an allowableAction method that extracts intern's inventory
+  for their item(s). For each item extract from player's inventory, the methods will check whether the item is sellable
+  by checking it's capability. If it is SELLABLE (which is no longer implement/use), this idea is stopped due to
+  requirement of interface-casting which will occur to change item declaration from Item to SellableItem.
+  Technically this would also be action of down-casting as Item isn't directly implementing SellableItem interface
+  (as we are unable to modify class from engine) but the sub-class of the Item class does. Down-casting is require in
+  this case as it will allow the sellable item that was initially declared as Item to utilise essential methods such as
+  getPrice(), getSellingPrice(), and sellItem(Actor actor, GameMap map). By doing this, the item will be compatible with
+  SellingAction class as they're able to use their SellableItem methods. Afterwards, the newly changed SellableItem
+  object will get pass into SellingAction's constructor parameter which is created everytime a sellable item is found
+  in intern's inventory.
+
+  **
+   Initially i didn't think interface casting would also be consider as down-casting in this scenario but I WAS DEAD
+   WRONG. When interface-cast occur from Item to SellingItem, the object simply down-cast to the sub-class that
+   implement interface and than interface cast itself to be declared as interface. Hence, consider as down-casting in
+   the initial implement of this requirement.
+  **
+
+  SellingAction:
+  In SellingAction, sellableItem, the buyer, and the intern (the seller) will be taken as the class attributes. In
+  execute method, the sellable item's sellItem(Actor actor, GameMap) methods will get called with intern as the method's
+  parameter. If the selling process is successful, the text "The intern sold the (the item) for $(the price)." will show
+  up whilst If the selling wasn't successful (where the process will check if the seller's health attribute have reached
+  0), the text "(the seller) is instantly killed by (the buyer)" will show, then the "YOU ARE FIRED" will show up as the
+  game is terminate. For menuDescription method, the method will print out a text which says "Sell (the item)." for the
+  intern to select if they want to sell that particular item. In terms of re-usability, this method will works with any
+  item objects that has SELLABLE in their capability as well as implementing SellableItem.
+
+  Toilet paper punish: For toilet paper, if the provided chance is met, the player will be killed instantly by the
+  humanoid figure. In terms of implementation idea, I assign dealing damage within toilet paper class (as it is its
+  passive affects). By not associating humanoid figure directly into this process, the code will become more versatile.
+
+Principles:
+
+DRY:
+
+- By creating both interface "SellableScrap" & "SellableItem", items that are Sellable will be able to re-use previous
+  code/method by override the interface's method and reusing the same concrete class to both identify themselves as
+  sellable and allow them to obtain price, calculate effects on price or the intern and sell the item to humanoid figure.
+
+- TraderActor class and new status "TRADER" will simply allow any new actor that will be add to the game to implement
+  if they need to be recognise as trader and not be able to be attack by other actor which is re-usable and no need to
+  make each new actor class to explicitly make themselves trader if extends from this existing class.
+
+
+SRP:
+- each newly created class mainly has single own responsibility:
+  e.g. - Humanoid figure: triggers selling actions for sellable item
+       - SellableItem interface: provide getPrice(), getSellingPrice(), and sellItem(Actor actor, GameMap map) methods
+         for sellable items to be able to provide appropriate price and sell for a particular item for buyer
+         (Humanoid figure).
+       - TRADER enum: allow the actor to be recognise as trader.
+       - TraderActor: Allow its object/actor to not be attack by any actor and recognised as trader.
+       - SellingAction: Provoke selling process by activating SellableScrap/SellableItem object's sellItem(Actor actor,
+         GameMap map) method. if not success (intern died), terminate the game by removing the actor from the map.
+
+OCP:
+- In order the implement current code, the original sellable items needs to change their extends from Item to
+  SellableScrap.
+- the newly created class should be extendable without needing to change its previous code.
+- e.g. - Other than Humanoid figure, any future coming actor that will have the ability to trigger sellingAction and not
+         be attack by other actors will simply need to extends the TraderActor class and add their own function that
+         suits the new actor's purposes. This promotes re-usability as well as extendable code as the new class will be
+         able to utilise and reuse TraderActor settings/attributes as well as adding new functions/methods.
+       - This would also apply to SellableItem where you could add a new function to the interface or if there is a new
+         sellable item, they will simply need to extends the sellableScrap.
+
+LSP:
+- Superclass will still be replaceable by newly created class.
+- e.g. - Humanoid figure can replace Actor or TraderActor.
+       - All the sellable item such as metal sheet and so on... can replace item, SellableScrap, or SellableItem.
+       - SellingAction can replace Action.
+
+ISP:
+- All the newly created class is fully utilising and isn't being force to rely on interface class.
+- e.g. all the sellable item are require to utilising both getPrice(), getSellingPrice() and sellItem(Actor actor,
+       GameMap map) from SellingItem interface.
+
+DIP:
+- High-level class isn't directly relying on low-level clas but through interface.
+- e.g. SellingAction is accessing sellable item classes (Metal sheet again and so on...) through SellableItem interface
+       as the items are required to and is implementing the interface.
+
+Dependency injection:
+- newly created class accepts object for it parameter.
+- e.g. SellingAction accepts SellableItem as their parameter.
+
+Smells:
+- Short length of methods: isn't too long.
+- No god classes: all the class have their own responsibility instead of having all responsibility to one class.
+- short parameter list: This principle is violated as the parameter for SellableScrap have a most 5 parameter variables
+                        in the constructor of the newly created classes.
+
+Connascence:
+- CoN: In majority of the classes in requirement 2, many class class such as SellableScraps and sellable items that
+       implement interface must have their methods with exact name and parameter. Due to this, any typo or changed to
+       the name of interface's methods will also result in changes in the classes that implements it.
+- CoT: Similar to the above's principle example, SellableItem's sellItem(Actor actor, GameMap map) method require both
+       Actor and GameMap object as its parameter, this means that sellableScraps and Items that implements SellableItem'
+       sellItem(Actor actor, GameMap) must accept Actor and GameMap objects or its sub-classes objects and return
+       nothing (void).
+- CoM: Luckily, each classes' methods has clear responsibility and usually doesn't change.
+- CoP: Any swap of order in any classes' constructor's parameter will result in changes to other classes' constructor
+       that extends them.
+- CoA: In getSellingItem() of sellable items that has different price to change to when their chance meets will need
+       their getSellingItem() override to allow them to change their price if their chance is meet.
+
+Pros:
+- Maintainable due to each class having single responsibility.
+- readable as each method isn't long and is responsible on single purpose.
+- Easily extendable when needed as there are classes made to accommodate future possible actors and items.
+
+Cons:
+- May be complicated due to single responsibility principle which splits classes resulting in needing a higher level of
+  knowledge of coding and scenario to acknowledge to what's going on.
+- May be time consuming to implement all the concepts at first (but ig it's worth it for readability and maintainability)
+
+
+
